@@ -1,0 +1,12 @@
+```txt
+fastapi
+uvicorn
+langchain
+langchain-community
+faiss-cpu
+sentence-transformers
+pypdf
+streamlit
+python-dotenv
+ollama
+requests
