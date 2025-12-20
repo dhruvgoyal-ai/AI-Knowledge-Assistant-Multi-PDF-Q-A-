@@ -7,8 +7,8 @@ venv/
 # Vector database
 faiss_index/
 
-# Uploaded data
-data/
+# Uploaded temp PDFs
+backend/temp_*.pdf
 
 # Python cache
 __pycache__/

@@ -1,26 +1,48 @@
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from ingest import get_vectorstore
 from langchain_community.llms import Ollama
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
-
-db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-
 llm = Ollama(model="phi3:mini")
-def ask_question(query: str):
-    docs = db.similarity_search(query, k=3)
-    context = "\n".join([doc.page_content for doc in docs])
+
+def get_answer(session_id, question):
+    # ❌ No session → no PDF
+    if not session_id:
+        return "❌ Please upload a PDF first."
+
+    vectorstore = get_vectorstore(session_id)
+
+    # ❌ No vectorstore → no PDF
+    if vectorstore is None:
+        return "❌ Please upload a PDF first."
+
+    # 🔍 Deep search for large PDFs
+    docs = vectorstore.similarity_search(question, k=15)
+
+    if not docs:
+        return "❌ Answer not found in the uploaded PDF."
+
+    # 🧹 Extra safety filter (optional but good)
+    filtered_docs = [
+        d for d in docs
+        if len(d.page_content.strip()) > 100
+    ]
+
+    if not filtered_docs:
+        return "❌ Answer not found in the uploaded PDF."
+
+    context = "\n".join(d.page_content for d in filtered_docs)
 
     prompt = f"""
-Answer the question based only on the context below.
+You must answer ONLY using the PDF content below.
+If the answer is not present in the PDF, say:
+"Answer not found in the uploaded PDF."
 
-Context:
+PDF Content:
 {context}
 
 Question:
-{query}
+{question}
 """
 
-    return llm.invoke(prompt)
+    # ✅ CORRECT way to call Ollama
+    response = llm.invoke(prompt)
+    return response
