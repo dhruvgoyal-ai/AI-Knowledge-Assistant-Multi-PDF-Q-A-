@@ -13,7 +13,7 @@ answer user queries and is designed to be easily extended with new tools and fea
 ## Tech Stack
 - Python
 - FastAPI
-- OpenRouter API
+- Groq API
 
 ## Architecture
 User Input → API Layer → Assistant Core → LLM / Tools → Response
